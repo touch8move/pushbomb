@@ -217,7 +217,9 @@ module.exports.insert = (data, tablename, callback) => {
 }
 
 module.exports.select = (where, tablename, callback) => {
-    pool.query("SELECT * FROM " + tablename + " WHERE " + mysql.escape(where), (err, results) => {
+    var select = "SELECT * FROM " + tablename + " WHERE " + where + " ORDER BY id DESC";
+    // console.log(select);
+    pool.query(select, (err, results) => {
         callback(err, results);
     });
 }

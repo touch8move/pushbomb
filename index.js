@@ -2,6 +2,7 @@ var FCM = require('fcm-node');
 var logger = require('./logger.js');
 var db = require('./db.js');
 var io = require('socket.io')(7777);
+var async = require('async');
 var deviceID = "837345606581";
 var fcm = new FCM('AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE');
 var message = {
@@ -78,6 +79,7 @@ io.on('connection', (socket) => {
             }
             currentUser = user;
             logger.emit('newEvent', 'login', currentUser.id);
+            socket.emit('logon');
         });
     });
 
@@ -85,7 +87,7 @@ io.on('connection', (socket) => {
     socket.on('sendMsg', (msg) => {
         // 다른 사람들에게 메세지 전달하기 
         console.log(msg);
-        var send = { 'from': currentUser.id, 'text': msg.msg };
+        var send = { 'sender': currentUser.id, 'text': msg.msg };
         db.insert(send, 'Msgs', (err, result) => {
             socket.emit('registSendMsgsComplete', { 'msgId': result.insertId, 'text': msg.msg });
             db.getUserList(currentUser.id, 10, (err, results) => {
@@ -94,10 +96,10 @@ io.on('connection', (socket) => {
                 }
                 // 거기서 걸리는 유저는 
                 results.forEach((user) => {
-                    var receive = { 'msgId': result.insertId, 'text': msg.msg, 'to': user.id };
+                    var receive = { 'msgId': result.insertId, 'text': msg.msg, 'recipient': user.id, 'sender': currentUser.id };
                     db.insert(receive, 'Receives', (err, results) => {
                         if (user.isOnline == 1 && user.deviceid == null) {
-                            io.to(user.socketid).emit('receiveMsgs', { 'msg': msg.msg, 'sender': currentUser.id, 'msgId': result.insertId });
+                            io.to(user.socketid).emit('receiveMsgs', receive);
                         } else {
                             // 아니면 푸시
                             fcm.send(Msg(msg.msg, user.deviceid), (err, response) => {
@@ -145,21 +147,49 @@ io.on('connection', (socket) => {
         클라에서 문자를 받아서 보여준다. client.socket.on('feedback_return')
     */
 
+    // socket.on('load_send', (data) => {
+    //     db.select(" 'from' = '" + data.id + "' ", "Msgs", (err, results) => {
+    //         var msgs = [];
+
+    //         results.forEach((msg) => {
+    //             db.select(" msgId = '" + msg.id + "' ", "Feedbacks", (err, pFeedbacks) => {
+    //                 msg.feedbacks = pFeedbacks;
+    //                 msgs.push(msg);
+    //             });
+    //         });
+    //         socket.emit('load_send_complete', msg);
+    //     });
+    // });
+
     socket.on('load_send', (data) => {
-        db.select(" 'from' = '" + data.id + "' ", "Msgs", (err, results) => {
-            var msgs = [];
-            results.forEach((msg) => {
-                db.select(" msgId = '" + msg.id + "' ", "Feedbacks", (err, pFeedbacks) => {
-                    msg.feedbacks = pFeedbacks;
-                    msgs.push(msg);
-                });
-            });
-            socket.emit('load_send_complete', msg);
+        db.select(" sender = '" + data.id + "' ", "Msgs", (err, rows) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let sends = rows;
+            let index = 0;
+            async.whilst(
+                () => {
+                    return index < sends.length;
+                },
+                (callback) => {
+                    db.select(" msgId = '" + sends[index].id + "' ", "Feedbacks", (err, pFeedbacks) => {
+                        if (err) return callback(err);
+                        sends[index].feedbacks = pFeedbacks;
+                        index++;
+                        callback(null, index);
+                    });
+                },
+                function(err, n) {
+                    socket.emit('load_send_complete', { 'sendMsgs': sends });
+                }
+            );
         });
     });
 
     socket.on('load_receive', (data) => {
-        db.select(" to ='" + data.id + "' ", "Receive", (err, results) => {
+        db.select(" recipient ='" + data.id + "' ", "Receives", (err, results) => {
             var msg = { 'receiveMsgs': results };
             socket.emit('load_receive_complete', msg);
         });
@@ -168,6 +198,10 @@ io.on('connection', (socket) => {
     socket.on('feedback', (feedback) => {
         console.log('feedback', feedback);
         db.insert(feedback, 'Feedbacks', (err, result) => {
+            if (err) {
+                logger.emit('newEvent', 'feedback', err);
+                return;
+            }
             if (result.isOnline == 1 && result.deviceid == null) {
                 io.to(result.socketid).emit('sendFeedback', feedback);
             } else {
