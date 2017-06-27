@@ -7,7 +7,8 @@ if (process.argv[2] != undefined) {
 }
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
-mongoose.connect('mongodb://localhost:27017/pushbomb');
+// mongoose.connect('mongodb://localhost:27017/pushbomb');
+mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL + process.env.OPENSHIFT_APP_NAME);
 
 var FCM = require('fcm-node');
 var logger = require('./logger.js');
