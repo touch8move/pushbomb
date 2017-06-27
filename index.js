@@ -58,22 +58,6 @@ var Msg = (msg, to, options) => {
 
 // 문자보내기 사이클
 /*
-    1. 작성자가 문자를 보낸다. - client.socket.emit('sendMsgs')
-    2. 서버에서 문자를 받는다. - server.socket.on('sendMsgs')
-    3. 서버에 등록된 문자를 등록된 아이디와 함께 다시 보낸사람에게 돌려준다. server.socket.emit('registSendMsgsComplete')
-    3. 받은문자를 다른 사용자에게 보내기 위해 사용자 검색을 한다. db
-    4. 현재 접속중 사용자와 미접속사용자를 구분한다.
-    5. 접속중 사용자는 직접 보내서 토스트를 보여준다. server.socket.emit('receiveMsgs')
-    6. 미접속 사용자는 푸시로 보낸다.
-
-    - 해당문자를 받은사람 -
-    문자를 받는다. client.socket.on('receiveMsgs')
-    문자를 클릭해서 해당 문자에 답변을 한다. client.socket.emit('feedback')
-    서버에서 문자를 처리한다. server.socket.on('feedback')
-    원 문자보낸사람에게 다시 보낸다. server.socket.emit('feedback_return')
-    클라에서 문자를 받아서 보여준다. client.socket.on('feedback_return')
-
-
     랜덤 문자발송 (PostMsg)
 	- 보내는 사람 sender
 	- 내용 text
@@ -82,8 +66,6 @@ var Msg = (msg, to, options) => {
 	받는사람이 보낸는 문자 (Feedback)
 	- 보내는 사람 feedbacker
 	- 내용 feedbackText
-
-
 */
 
 io.on('connection', (socket) => {
@@ -186,26 +168,6 @@ io.on('connection', (socket) => {
             socket.emit('feedbackReturn', feedbackTarget);
             sendMsg(feedbackTarget.sender, feedbackTarget, 'pushBomb');
         });
-
-        // feedback.load(currentUser, (err, feedbacks) => {
-        //     if (err) {
-        //         logger.emit('newEvent', 'feedback', err);
-        //         return;
-        //     }
-        //     async.each(feedbacks, (feedback, cb) => {
-        // 		if(feedback._id)
-        //         feedback.feedbackText = feedbackMsg.feedbackText;
-        //         feedback.feedbackDate = new Date();
-        //         feedback.save();
-        //         socket.emit('sendFeedbackS', feedback);
-        //         sendMsg(feedback.sender, feedback, 'sendFeedbackS');
-        //         cb();
-        //     }, (err) => {
-        //         if (err) {
-        //             logger.emit('newEvent', 'recipient create', err);
-        //         }
-        //     });
-        // });
     });
 });
 
