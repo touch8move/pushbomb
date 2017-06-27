@@ -1,3 +1,5 @@
+'use strict';
+
 var port = 7777;
 // process.argv.forEach((val, index, array) => {
 //     console.log(index + ': ' + val);

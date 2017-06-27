@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 var events = require('events');
 var logger = new events.EventEmitter();
 logger.on('newEvent', function(event, data) {
