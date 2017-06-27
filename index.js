@@ -5,6 +5,10 @@ var port = 7777;
 if (process.argv[2] != undefined) {
     port = process.argv[2];
 }
+var mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
+mongoose.connect('mongodb://localhost:27017/pushbomb');
+
 var FCM = require('fcm-node');
 var logger = require('./logger.js');
 var db = require('./db.js');
@@ -14,6 +18,12 @@ var async = require('async');
 var User = require('./user.js');
 var deviceID = "837345606581";
 var fcm = new FCM('AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE');
+
+
+var user_m = require('./user_m.js'),
+    msg_m = require('./msg_m.js'),
+    feedback = require('./feedback.js')
+
 // var message = {
 //     to: 'fXA7mguvYHU:APA91bHfOYttx5x9BR5769Vnh6SvzBN_Gv_7UqtNlsgMlqRhfKSfSsqCgQRPMApgLSFCLR2TZfU06B20wI4EefYCQJqF_sCeba0Ry3hE_BhJ44xcibLiwtSQKc3EncEomvzrSbMQGqQX',
 //     notification: {
@@ -62,6 +72,18 @@ var Msg = (msg, to, options) => {
     서버에서 문자를 처리한다. server.socket.on('feedback')
     원 문자보낸사람에게 다시 보낸다. server.socket.emit('feedback_return')
     클라에서 문자를 받아서 보여준다. client.socket.on('feedback_return')
+
+
+    랜덤 문자발송 (PostMsg)
+	- 보내는 사람 sender
+	- 내용 text
+	- 받는사람 recipient
+
+	받는사람이 보낸는 문자 (Feedback)
+	- 보내는 사람 feedbacker
+	- 내용 feedbackText
+
+
 */
 
 io.on('connection', (socket) => {
@@ -75,67 +97,59 @@ io.on('connection', (socket) => {
     });
 
     // 신규유저 
-    socket.on('newUser', () => {
-        db.create((err, user) => {
-            if (err) {
-                logger.emit('newEvent', 'user create', err);
-                return;
-            }
-            logger.emit('newEvent', 'userConnected', { 'userid': user.id });
+    socket.on('newUser', (deviceid) => {
+        user_m.create(socket.id, (err, user) => {
             if (err) {
                 logger.emit('newEvent', 'new user', err);
                 return;
             }
-            logger.emit('newEvent', 'new user', user);
             currentUser = user;
             socket.emit('newuser_complete', { 'id': user.id });
-        });
+        })
     });
 
     // 로그인 
     socket.on('login', (data) => {
-        db.login(data.id, socket.id, (err, user) => {
+        user_m.login(data.id, socket.id, (err, user) => {
             if (err) {
-                logger.emit('newEvent', 'login error', err);
-                if (err == db.ERR_CODE.AUTH_ERR_NO_USER) {
-                    socket.emit('client_newuser');
-                }
+                socket.emit('client_newuser');
                 return;
             }
             currentUser = user;
             logger.emit('newEvent', 'login', currentUser.id);
             socket.emit('logon');
-        });
+        })
     });
 
     // 메세지 전송
-    socket.on('sendMsg', (msg) => {
+    socket.on('PostMsg', (msg) => {
+        logger.emit('newEvent', 'PostMsg', msg);
         // 다른 사람들에게 메세지 전달하기 
         var send = { 'sender': currentUser.id, 'text': msg.msg };
-        db.insert(send, 'Msgs', (err, result) => {
-            send.id = result.insertId;
-            socket.emit('registSendMsgsComplete', send);
-            db.getUserList(currentUser.id, 10, (err, results) => {
-                if (results == undefined) {
+        msg_m.create(currentUser.id, send.text, (err, ret_msg) => {
+            user_m.getRandomUsers(currentUser, (err, users) => {
+                if (err) {
+                    logger.emit('newEvent', 'send', err);
                     return;
                 }
-                // 거기서 걸리는 유저는 
-                results.forEach((user) => {
-                    var receive = { 'msgId': result.insertId, 'text': msg.msg, 'recipient': user.id, 'sender': currentUser.id };
-                    db.insert(receive, 'Receives', (err, results) => {
-                        if (user.isOnline == 1 && user.deviceid == null) {
-                            io.to(user.socketid).emit('receiveMsgs', receive);
-                        } else {
-                            // 아니면 푸시
-                            fcm.send(Msg(msg.msg, user.deviceid), (err, response) => {
-                                if (err) {
-                                    console.log(err);
-                                    console.log("Something has gone wrong!");
-                                } else {
-                                    console.log("Successfully sent with response: ", response);
-                                }
+                async.each(users, (user, cb) => {
+                    feedback.Feedback.create({ 'recipient': user, 'sender': currentUser, 'msgText': send.text, 'msgId': ret_msg.id })
+                        .then((feedbackData) => {
+                            ret_msg.receives.push(feedbackData);
+                            sendMsg(user, feedbackData, 'receiveMsgs');
+                            logger.emit('newEvent', 'feedback', feedbackData);
+                            cb();
+                        });
+                }, (err) => {
+                    if (err) {
+                        logger.emit('newEvent', 'recipient create', err);
+                    }
+                    ret_msg.save((err, res) => {
+                        msg_m.Msg.findById(res.id).deepPopulate('sender receives').exec()
+                            .then((ret) => {
+                                logger.emit('newEvent', 'PostMsg', ret);
+                                socket.emit('registSendMsgsComplete', ret);
                             });
-                        }
                     });
                 });
             });
@@ -144,100 +158,71 @@ io.on('connection', (socket) => {
 
 
     socket.on('RegisterDeviceId', (data) => {
-        db.RegisterDeviceId(data.id, data.deviceid, (err) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
-
+        user_m.registDeviceId(data.id, data.deviceid, (err, user) => {
             socket.emit("RegDeviceIdComplete");
-        });
+        })
     });
 
     socket.on('load_send', (data) => {
-        db.select(" sender = '" + data.id + "' ", "Msgs", (err, rows) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
-            let sends = rows;
-            let index = 0;
-            async.whilst(
-                () => {
-                    return index < sends.length;
-                },
-                (callback) => {
-                    db.select(" msgId = '" + sends[index].id + "' ", "Feedbacks", (err, pFeedbacks) => {
-                        if (err) return callback(err);
-                        sends[index].feedbacks = pFeedbacks;
-                        index++;
-                        callback(null, index);
-                    });
-                },
-                function(err, n) {
-                    socket.emit('load_send_complete', { 'sendMsgs': sends });
-                }
-            );
-        });
+        msg_m.load(currentUser, (err, msgs) => {
+            socket.emit('load_send_complete', { 'sendMsgs': msgs });
+        })
     });
 
     socket.on('load_receive', (data) => {
-        db.select("recipient ='" + data.id + "' ", "Receives", (err, rows) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
-            let receive = rows;
-            let index = 0;
-            async.whilst(
-                () => {
-                    return index < receive.length;
-                },
-                (callback) => {
-                    db.select(" msgId = '" + receive[index].msgId + "' ", "Feedbacks", (err, pFeedback) => {
-                        if (err) return callback(err);
-                        receive[index].feedback = pFeedback[0];
-                        index++;
-                        callback(null, index);
-                    });
-                },
-                function(err, n) {
-                    socket.emit('load_receive_complete', { 'receiveMsgs': receive });
-                }
-            );
-        });
+        feedback.load(currentUser, (err, feedbacks) => {
+            socket.emit('load_receive_complete', { 'receiveMsgs': feedbacks });
+        })
     });
 
-    socket.on('feedback', (feedback) => {
-        db.insert(feedback, 'Feedbacks', (err, insertResult) => {
-            if (err) {
-                logger.emit('newEvent', 'feedback', err);
-                return;
-            }
-            socket.emit('sendFeedbackR', feedback);
-            db.select("id= '" + feedback.sender + "'", "Users", (err, result) => {
-                if (err) {
-                    logger.emit('newEvent', 'feedback', err);
-                    return;
-                }
+    // 답장을 보내면 원래 메세지를 보낸 사람에게 답장을 보내준다.
+    socket.on('feedback', (feedbackMsg) => {
+        console.log(feedbackMsg);
 
-                var user = new User(result[0]);
-
-                if (user.isOnline == 1 && result.deviceid == null) {
-                    io.to(user.socketid).emit('sendFeedbackS', feedback);
-                }
-                // else {
-                //     // 아니면 푸시
-                //     fcm.send(Msg(feedback.text, user.deviceid), (err, response) => {
-                //         if (err) {
-                //             console.log(err);
-                //             console.log("Something has gone wrong!");
-                //         } else {
-                //             console.log("Successfully sent with response: ", response);
-                //         }
-                //     });
-                // }
-            })
+        feedback.get(feedbackMsg.id, (err, feedbackTarget) => {
+            feedbackTarget.feedbackText = feedbackMsg.text;
+            feedbackTarget.feedbackDate = new Date();
+            feedbackTarget.save();
+            socket.emit('feedbackReturn', feedbackTarget);
+            sendMsg(feedbackTarget.sender, feedbackTarget, 'pushBomb');
         });
+
+        // feedback.load(currentUser, (err, feedbacks) => {
+        //     if (err) {
+        //         logger.emit('newEvent', 'feedback', err);
+        //         return;
+        //     }
+        //     async.each(feedbacks, (feedback, cb) => {
+        // 		if(feedback._id)
+        //         feedback.feedbackText = feedbackMsg.feedbackText;
+        //         feedback.feedbackDate = new Date();
+        //         feedback.save();
+        //         socket.emit('sendFeedbackS', feedback);
+        //         sendMsg(feedback.sender, feedback, 'sendFeedbackS');
+        //         cb();
+        //     }, (err) => {
+        //         if (err) {
+        //             logger.emit('newEvent', 'recipient create', err);
+        //         }
+        //     });
+        // });
     });
 });
+
+var sendMsg = (recipient, data, eventName) => {
+    if (recipient.isOnline == 1 && recipient.deviceid == null) {
+        io.to(recipient.socketid).emit(eventName, data);
+    }
+
+    // else {
+    //     // 아니면 푸시
+    //     fcm.send(Msg(recipient.feedbackText, sender.deviceid), (err, response) => {
+    //         if (err) {
+    //             console.log(err);
+    //             console.log("Something has gone wrong!");
+    //         } else {
+    //             console.log("Successfully sent with response: ", response);
+    //         }
+    //     });
+    // }
+}
