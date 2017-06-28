@@ -185,11 +185,11 @@ io.on('connection', (socket) => {
 
 var sendMsg = (recipient, data, eventName) => {
     // 서버에 온라인이라면 
-    // var recipientSocket = io.sockets.connected[recipient.socketid];
-    // if (recipientSocket != undefined) {
-    //     recipientSocket.emit(eventName, data);
-    // } else {
-    // recipientSocket.emit(eventName, data);
+    var recipientSocket = io.sockets.connected[recipient.socketid];
+    if (recipientSocket != undefined) {
+        recipientSocket.emit(eventName, data);
+        return;
+    }
 
     if (recipient.deviceid) {
         return;
@@ -202,5 +202,4 @@ var sendMsg = (recipient, data, eventName) => {
             console.log("Successfully sent with response: ", response);
         }
     });
-    // }
 }
