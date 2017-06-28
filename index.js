@@ -57,13 +57,10 @@ var Msg = (msg, to, options) => {
         }
     }
 }
-var MsgData = (msg, to, options) => {
+var MsgData = (data, to) => {
     return {
         "to": to,
-        "data": {
-            // "title": "NotiTitle",
-            "body": msg,
-        }
+        "data": data
     }
 }
 
@@ -194,6 +191,14 @@ var sendMsg = (recipient, data, eventName) => {
         console.log('recipient deviceid null or undefined');
         return;
     }
+    fcm.send(MsgData(recipient, recipient.deviceid), (err, response) => {
+        if (err) {
+            console.log(err);
+            console.log("Something has gone wrong!");
+        } else {
+            console.log("Successfully sent with response: ", response);
+        }
+    });
     fcm.send(Msg(recipient.feedbackText, recipient.deviceid), (err, response) => {
         if (err) {
             console.log(err);
