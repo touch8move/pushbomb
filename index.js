@@ -185,7 +185,7 @@ io.on('connection', (socket) => {
 
 var sendMsg = (recipient, data, eventName) => {
     // 서버에 온라인이라면 
-    // var recipientSocket = io.sockets.connected[recipient.socketid];
+    var recipientSocket = io.sockets.connected[recipient.socketid];
     // if (recipientSocket != undefined) {
     //     recipientSocket.emit(eventName, data);
     // } else {
