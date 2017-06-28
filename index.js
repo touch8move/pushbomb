@@ -190,7 +190,7 @@ var sendMsg = (recipient, data, eventName) => {
     //     recipientSocket.emit(eventName, data);
     // } else {
     recipientSocket.emit(eventName, data);
-    fcm.send(Msg(recipient.feedbackText, sender.deviceid), (err, response) => {
+    fcm.send(Msg(recipient.feedbackText, recipient.sender.deviceid), (err, response) => {
         if (err) {
             console.log(err);
             console.log("Something has gone wrong!");
