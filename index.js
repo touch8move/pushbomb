@@ -58,6 +58,15 @@ var Msg = (msg, to, options) => {
         }
     }
 }
+var MsgData = (msg, to, options) => {
+    return {
+        "to": to,
+        "data": {
+            // "title": "NotiTitle",
+            "body": msg,
+        }
+    }
+}
 
 // 문자보내기 사이클
 /*
@@ -175,19 +184,19 @@ io.on('connection', (socket) => {
 });
 
 var sendMsg = (recipient, data, eventName) => {
-    if (recipient.isOnline == 1 && recipient.deviceid == null) {
-        io.to(recipient.socketid).emit(eventName, data);
-    }
-
-    // else {
-    //     // 아니면 푸시
-    //     fcm.send(Msg(recipient.feedbackText, sender.deviceid), (err, response) => {
-    //         if (err) {
-    //             console.log(err);
-    //             console.log("Something has gone wrong!");
-    //         } else {
-    //             console.log("Successfully sent with response: ", response);
-    //         }
-    //     });
+    // 서버에 온라인이라면 
+    // var recipientSocket = io.sockets.connected[recipient.socketid];
+    // if (recipientSocket != undefined) {
+    //     recipientSocket.emit(eventName, data);
+    // } else {
+    recipientSocket.emit(eventName, data);
+    fcm.send(Msg(recipient.feedbackText, sender.deviceid), (err, response) => {
+        if (err) {
+            console.log(err);
+            console.log("Something has gone wrong!");
+        } else {
+            console.log("Successfully sent with response: ", response);
+        }
+    });
     // }
 }
