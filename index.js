@@ -187,7 +187,7 @@ var sendMsg = (recipient, data, eventName) => {
     var recipientSocket = io.sockets.connected[recipient.socketid];
     if (recipientSocket != undefined) {
         recipientSocket.emit(eventName, data);
-        return;
+        // return;
     }
 
     if (recipient.deviceid == null || recipient.deviceid == undefined) {
