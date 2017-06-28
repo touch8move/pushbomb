@@ -190,6 +190,7 @@ var sendMsg = (recipient, data, eventName) => {
     //     recipientSocket.emit(eventName, data);
     // } else {
     // recipientSocket.emit(eventName, data);
+
     if (recipient.deviceid) {
         return;
     }
