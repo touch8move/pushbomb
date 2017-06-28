@@ -185,12 +185,15 @@ io.on('connection', (socket) => {
 
 var sendMsg = (recipient, data, eventName) => {
     // 서버에 온라인이라면 
-    var recipientSocket = io.sockets.connected[recipient.socketid];
+    // var recipientSocket = io.sockets.connected[recipient.socketid];
     // if (recipientSocket != undefined) {
     //     recipientSocket.emit(eventName, data);
     // } else {
-    recipientSocket.emit(eventName, data);
-    fcm.send(Msg(recipient.feedbackText, recipient.sender.deviceid), (err, response) => {
+    // recipientSocket.emit(eventName, data);
+    if (recipient.deviceid) {
+        return;
+    }
+    fcm.send(Msg(recipient.feedbackText, recipient.deviceid), (err, response) => {
         if (err) {
             console.log(err);
             console.log("Something has gone wrong!");
