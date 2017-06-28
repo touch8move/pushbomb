@@ -19,7 +19,6 @@ var io = require('socket.io')(port);
 var async = require('async');
 
 var User = require('./user.js');
-var deviceID = "837345606581";
 var fcm = new FCM('AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE');
 
 
@@ -191,7 +190,8 @@ var sendMsg = (recipient, data, eventName) => {
         return;
     }
 
-    if (recipient.deviceid) {
+    if (recipient.deviceid == null || recipient.deviceid == undefined) {
+        console.log('recipient deviceid null or undefined');
         return;
     }
     fcm.send(Msg(recipient.feedbackText, recipient.deviceid), (err, response) => {
