@@ -33,6 +33,10 @@ module.exports.create = (sender, text, callback) => {
 
 module.exports.load = (user, callback) => {
     Msg.find({ 'sender': user })
+        .populate({
+            path: 'receives',
+            match: { 'feedbackText': { $exists: true } },
+        })
         .deepPopulate('sender receives')
         .sort({ '_id': -1 })
         .exec()

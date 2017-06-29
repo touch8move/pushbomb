@@ -63,7 +63,8 @@ var MsgData = (data, to) => {
         "data": data
     }
 }
-
+var feedbackEventName = 'pushbomb';
+var receiveMsgEventName = 'receiveMsgs';
 // 문자보내기 사이클
 /*
     랜덤 문자발송 (PostMsg)
@@ -126,7 +127,7 @@ io.on('connection', (socket) => {
                     feedback.Feedback.create({ 'recipient': user, 'sender': currentUser, 'msgText': send.text, 'msgId': ret_msg.id })
                         .then((feedbackData) => {
                             ret_msg.receives.push(feedbackData);
-                            sendMsg(user, feedbackData, 'receiveMsgs');
+                            sendMsg(user, feedbackData, receiveMsgEventName);
                             logger.emit('newEvent', 'feedback', feedbackData);
                             cb();
                         });
@@ -155,6 +156,7 @@ io.on('connection', (socket) => {
 
     socket.on('load_send', (data) => {
         msg_m.load(currentUser, (err, msgs) => {
+            console.log(msgs);
             socket.emit('load_send_complete', { 'sendMsgs': msgs });
         })
     });
@@ -174,31 +176,32 @@ io.on('connection', (socket) => {
             feedbackTarget.feedbackDate = new Date();
             feedbackTarget.save();
             socket.emit('feedbackReturn', feedbackTarget);
-            sendMsg(feedbackTarget.sender, feedbackTarget, 'pushBomb');
+            sendMsg(feedbackTarget.sender, feedbackTarget, feedbackEventName);
         });
+    });
+    socket.on('newMsgConfirm', (data) => {
+        user_m.UserModel.findById(data._id).exec()
+            .then((user) => {
+                console.log(user);
+            });
     });
 });
 
 var sendMsg = (recipient, data, eventName) => {
-    // 서버에 온라인이라면 
+
     var recipientSocket = io.sockets.connected[recipient.socketid];
+
+    // 앱이 켜있다면 
     if (recipientSocket != undefined) {
         recipientSocket.emit(eventName, data);
-        // return;
+        return;
     }
 
     if (recipient.deviceid == null || recipient.deviceid == undefined) {
         console.log('recipient deviceid null or undefined');
         return;
     }
-    fcm.send(MsgData(recipient, recipient.deviceid), (err, response) => {
-        if (err) {
-            console.log(err);
-            console.log("Something has gone wrong!");
-        } else {
-            console.log("Successfully sent with response: ", response);
-        }
-    });
+
     fcm.send(Msg(recipient.feedbackText, recipient.deviceid), (err, response) => {
         if (err) {
             console.log(err);
