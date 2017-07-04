@@ -10,7 +10,7 @@ var MsgModel = new Schema({
     text: String,
     createdDate: { type: Date, default: Date.now },
     isDel: Boolean,
-    receives: [{ type: Schema.Types.ObjectId, ref: 'Feedback' }]
+    sents: [{ type: Schema.Types.ObjectId, ref: 'Sent' }]
 });
 
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
@@ -34,10 +34,10 @@ module.exports.create = (sender, text, callback) => {
 module.exports.load = (user, callback) => {
     Msg.find({ 'sender': user })
         .populate({
-            path: 'receives',
-            match: { 'feedbackText': { $exists: true } },
+            path: 'sents',
+            match: { 'feedback': { $exists: true } },
         })
-        .deepPopulate('sender receives')
+        .deepPopulate('sender sents sents.feedback')
         .sort({ '_id': -1 })
         .exec()
         .then((msgs) => {
