@@ -37,7 +37,7 @@ module.exports.load = (user, callback) => {
             path: 'sents',
             match: { 'feedback': { $exists: true } },
         })
-        .deepPopulate('sender sents sents.feedback')
+        .deepPopulate('sender sents sents.feedback sents.feedback.creator')
         .sort({ '_id': -1 })
         .exec()
         .then((msgs) => {

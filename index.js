@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
             }
             currentUser = user;
             logger.emit('log', 'login', currentUser.id);
-            socket.emit('logon');
+            socket.emit('logon', { 'nickname': currentUser.nickname });
         })
     });
 
@@ -110,10 +110,10 @@ io.on('connection', (socket) => {
                 }
                 socket.emit('registSendMsgsComplete', ret_msg);
                 async.each(users, (user, cb) => {
-                    sent.Sent.create({ 'msgId': msg_m.id, 'recipient': user, 'text': send.text, 'sender': currentUser })
+                    sent.Sent.create({ 'msgId': ret_msg.id, 'recipient': user, 'text': send.text, 'sender': currentUser })
                         .then((sentData) => {
                             ret_msg.sents.push(sentData);
-                            sendMsg(user, { 'msgId': ret_msg.id, 'data': sentData }, receiveMsgEventName);
+                            sendMsg(user, { 'data': sentData }, receiveMsgEventName);
                             cb();
                         });
                 }, (err) => {
@@ -148,28 +148,17 @@ io.on('connection', (socket) => {
     // 답장을 보내면 원래 메세지를 보낸 사람에게 답장을 보내준다.
     socket.on('feedback', (sentMsg) => {
         sent.get(sentMsg.id, (err, sentTarget) => {
-            feedback.Feedback
-                .create({ 'sent': sentTarget, 'creator': currentUser, 'text': sentMsg.text })
-                .then((feedbackResult) => {
-                    sentTarget.feedback = feedbackResult.toObject();
-                    sentTarget.save((err, res) => {
-                        sent.Sent.findById(sentTarget.id)
-                            .deepPopulate('recipient sender feedback').exec()
-                            .then((result) => {
-                                logger.emit('log', 'sent', result);
-                                socket.emit('feedbackReturn', { 'sentId': sentTarget.id, 'data': result });
-                                msg_m.Msg.findOne({ 'sents': sentTarget })
-                                    .deepPopulate('sender sents')
-                                    .exec()
-                                    .then((res) => {
-                                        console.log(res);
-                                        if (res) {
-                                            sendMsg(sentTarget.sender, { 'msgId': res.id, 'data': feedbackResult }, sentEventName);
-                                        }
-                                    });
-                            });
+            feedback.Feedback.create({ 'sent': sentTarget, 'creator': currentUser, 'text': sentMsg.text }).then((feedbackResult) => {
+                sentTarget.feedback = feedbackResult.toObject();
+                sentTarget.save((err, res) => {
+                    sent.Sent.findById(sentTarget.id).deepPopulate('recipient sender feedback feedback.creator').exec().then((result) => {
+                        logger.emit('log', 'sent', result);
+                        socket.emit('feedbackReturn', { 'sentId': sentTarget.id, 'data': result });
+
+                        sendMsg(result.sender, { 'data': result }, sentEventName);
                     });
                 });
+            });
         });
     });
 
@@ -179,6 +168,13 @@ io.on('connection', (socket) => {
                 logger.emit('log', 'newMsgConfirm', '');
             });
     });
+
+    socket.on('nickname', (data) => {
+        currentUser.nickname = data.nickname;
+        currentUser.save(() => {
+            socket.emit('nickname_update', { 'nickname': currentUser.nickname });
+        });
+    })
 });
 
 var sendMsg = (recipient, data, eventName) => {

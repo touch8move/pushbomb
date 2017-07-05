@@ -19,7 +19,7 @@ module.exports.Sent = Sent;
 
 module.exports.load = (user, callback) => {
     Sent.find({ 'recipient': user })
-        .deepPopulate('recipient sender feedback')
+        .deepPopulate('recipient sender feedback feedback.creator')
         .sort({ '_id': -1 }).exec()
         .then(
             (sents) => {

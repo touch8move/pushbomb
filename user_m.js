@@ -10,7 +10,8 @@ var UserModel = new mongoose.Schema({
     lastLoginDate: Date,
     deviceid: String,
     deviceType: Number,
-    isOnline: Boolean
+    isOnline: Boolean,
+    nickname: String
 });
 
 
