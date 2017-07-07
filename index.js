@@ -1,28 +1,25 @@
 'use strict';
 
-var port = 7777;
+let config;
 if (process.argv[2] != undefined) {
-    port = process.argv[2];
+    config = require('./' + process.argv[2] + '.config.json');
+    process.env.port = config.port;
+    process.env.mode = config.mode;
+    console.log(config);
 }
-
-if (process.argv[3] != undefined) {
-    process.env.mode = process.argv[3];
-}
-
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
-mongoose.connect('mongodb://localhost:27017/pushbomb');
-// mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL + process.env.OPENSHIFT_APP_NAME);
+mongoose.connect(config.mongodb_url);
 
 var FCM = require('fcm-node');
 var logger = require('./logger.js');
 var db = require('./db.js');
-var io = require('socket.io')(port);
+var io = require('socket.io')(process.env.port);
 var async = require('async');
 var sizeof = require('object-sizeof');
 
 var User = require('./user.js');
-var fcm = new FCM('AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE');
+var fcm = new FCM(config.fcm_key);
 var user_m = require('./user_m.js'),
     msg_m = require('./msg_m.js'),
     sent = require('./sent.js'),
@@ -34,9 +31,9 @@ var Msg = (msg, to, options) => {
         "notification": {
             // "title": "NotiTitle",
             "body": msg,
-            "sound": "default",
-            "click_action": "FCM_PLUGIN_ACTIVITY",
-            "icon": "fcm_push_icon",
+            // "sound": "default",
+            // "click_action": "FCM_PLUGIN_ACTIVITY",
+            // "icon": "fcm_push_icon",
         }
     }
 }
@@ -48,17 +45,6 @@ var MsgData = (data, to) => {
 }
 var sentEventName = 'pushbomb';
 var receiveMsgEventName = 'receiveMsgs';
-// 문자보내기 사이클
-/*
-    랜덤 문자발송 (PostMsg)
-	- 보내는 사람 sender
-	- 내용 text
-	- 받는사람 recipient
-
-	받는사람이 보낸는 문자 (Feedback)
-	- 보내는 사람 feedbacker
-	- 내용 feedbackText
-*/
 
 io.on('connection', (socket) => {
     var currentUser;

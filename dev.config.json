@@ -1,0 +1,7 @@
+{
+    "name": "development",
+    "port": 7777,
+    "mode": "dev",
+    "mongodb_url": "mongodb://localhost:27017/pushbomb",
+    "fcm_key": "AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE"
+}

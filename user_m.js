@@ -105,9 +105,8 @@ module.exports.getRandomUsers = (exceptUser, callback) => {
                 }
                 if (removeIndex != -1) {
                     let exceptedUser = users.splice(removeIndex, 1);
-                } else {
-                    // console.log('no except', users);
                 }
+
                 callback(err, users);
             }
         );
