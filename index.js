@@ -16,7 +16,7 @@ var logger = require('./logger.js');
 var db = require('./db.js');
 var io = require('socket.io')(process.env.port);
 var async = require('async');
-var sizeof = require('object-sizeof');
+// var sizeof = require('object-sizeof');
 
 var User = require('./user.js');
 var fcm = new FCM(config.fcm_key);
