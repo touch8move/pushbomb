@@ -20,14 +20,12 @@ module.exports.load = (user, callback) => {
         .deepPopulate('recipient sender')
         .sort({ '_id': -1 })
         .exec()
-        .then(
-            (feedbacks) => {
-                callback(null, feedbacks);
-            })
-        .catch(
-            (err) => {
-                callback(err);
-            });
+        .then((feedbacks) => {
+            callback(null, feedbacks);
+        })
+        .catch((err) => {
+            callback(err);
+        });
 }
 
 module.exports.get = (id, callback) => {

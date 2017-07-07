@@ -21,23 +21,20 @@ module.exports.load = (user, callback) => {
     Sent.find({ 'recipient': user })
         .deepPopulate('recipient sender feedback feedback.creator')
         .sort({ '_id': -1 }).exec()
-        .then(
-            (sents) => {
-                callback(null, sents);
-            })
-        .catch(
-            (err) => {
-                callback(err);
-            });
+        .then((sents) => {
+            callback(null, sents);
+        })
+        .catch((err) => {
+            callback(err);
+        });
 }
 
 module.exports.get = (id, callback) => {
     Sent.findById(id)
         .deepPopulate('recipient sender feedback').exec()
-        .then(
-            (sent) => {
-                callback(null, sent);
-            })
+        .then((sent) => {
+            callback(null, sent);
+        })
         .catch((err) => {
             callback(err);
         });

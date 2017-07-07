@@ -1,9 +1,6 @@
 'use strict';
 
 var port = 7777;
-// process.argv.forEach((val, index, array) => {
-// console.log(index + ': ' + val);
-// });
 if (process.argv[2] != undefined) {
     port = process.argv[2];
 }
@@ -64,7 +61,6 @@ var receiveMsgEventName = 'receiveMsgs';
 */
 
 io.on('connection', (socket) => {
-    // logger.emit('log', 'connection', socket.id);
     var currentUser;
     // 앱 종료
     socket.on('disconnect', () => {
@@ -130,19 +126,19 @@ io.on('connection', (socket) => {
     socket.on('RegisterDeviceId', (data) => {
         user_m.registDeviceId(data.id, data.deviceid, (err, user) => {
             socket.emit("RegDeviceIdComplete");
-        })
+        });
     });
 
     socket.on('load_send', (data) => {
         msg_m.load(currentUser, (err, msgs) => {
             socket.emit('load_send_complete', { 'sendMsgs': msgs });
-        })
+        });
     });
 
     socket.on('load_receive', (data) => {
         sent.load(currentUser, (err, sents) => {
             socket.emit('load_receive_complete', { 'receiveMsgs': sents });
-        })
+        });
     });
 
     // 답장을 보내면 원래 메세지를 보낸 사람에게 답장을 보내준다.

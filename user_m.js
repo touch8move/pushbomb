@@ -36,7 +36,6 @@ module.exports.create = (socketid, callback) => {
 module.exports.login = (id, socketid, callback) => {
     User.findById(id).exec()
         .then((user) => {
-            // console.log(user);
             user.socketid = socketid;
             user.lastLoginDate = new Date();
             user.isOnline = true;
@@ -50,7 +49,6 @@ module.exports.login = (id, socketid, callback) => {
 module.exports.logout = (id, callback) => {
     User.findById(id).exec()
         .then((user) => {
-            // user.lastLoginDate = new Date();
             user.socketid = null;
             user.isOnline = false;
             user.save();
@@ -77,7 +75,6 @@ module.exports.getRandomUsers = (exceptUser, callback) => {
     let multi_hit = 0;
     let index = 0;
     User.count().exec().then((count) => {
-        // console.log('maxCount', count);
         async.during(
             (cb) => {
                 return cb(null, index < maxReceiverCount);
@@ -85,7 +82,6 @@ module.exports.getRandomUsers = (exceptUser, callback) => {
             (cb) => {
                 index++;
                 let random = Math.floor(Math.random() * count);
-                // console.log(index, random);
                 if (rows.indexOf(random) == -1) {
                     rows.push(random);
                     User.findOne().skip(random).exec((err, user) => {
@@ -94,28 +90,21 @@ module.exports.getRandomUsers = (exceptUser, callback) => {
                     });
                 } else {
                     multi_hit++;
-                    // console.log('multihit', multi_hit);
                     if (multi_hit > 3) {
                         index = maxReceiverCount;
                     }
                     cb();
                 }
             },
-            function(err) {
+            (err) => {
                 let removeIndex = -1;
                 for (let i = 0; i < users.length; i++) {
                     if (users[i].id == exceptUser.id) {
-                        // console.log('users[', i, ']', users[i].id);
-                        // console.log('exceptUser', exceptUser.id);
                         removeIndex = i;
                     }
                 }
                 if (removeIndex != -1) {
-                    // console.log('before', users);
                     let exceptedUser = users.splice(removeIndex, 1);
-
-                    // console.log('exceptedUser', removeIndex, exceptedUser.id);
-                    // console.log('users', users);
                 } else {
                     // console.log('no except', users);
                 }
