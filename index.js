@@ -9,11 +9,35 @@ if (process.argv[2] != undefined) {
 }
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
-mongoose.connect(config.mongodb_url);
+mongoose.connect(config.mongodb_url, { server: { auto_reconnect: true } }, (err) => {
+    logger.emit('err', 'mongodb', err);
+});
+
+mongoose.connection.on('connecting', function() {
+    console.log('connecting to MongoDB...');
+});
+
+mongoose.connection.on('error', function(error) {
+    console.error('Error in MongoDb connection: ' + error);
+    mongoose.disconnect();
+});
+mongoose.connection.on('connected', function() {
+    console.log('MongoDB connected!');
+});
+mongoose.connection.once('open', function() {
+    console.log('MongoDB connection opened!');
+});
+mongoose.connection.on('reconnected', function() {
+    console.log('MongoDB reconnected!');
+});
+mongoose.connection.on('disconnected', function() {
+    console.log('MongoDB disconnected!');
+    mongoose.connect(config.mongodb_url, { server: { auto_reconnect: true } });
+});
 
 var FCM = require('fcm-node');
 var logger = require('./logger.js');
-var db = require('./db.js');
+// var db = require('./db.js');
 var io = require('socket.io')(process.env.port);
 var async = require('async');
 // var sizeof = require('object-sizeof');
@@ -50,7 +74,10 @@ io.on('connection', (socket) => {
     var currentUser;
     // 앱 종료
     socket.on('disconnect', () => {
-        db.logout(currentUser.id, (err, data) => {
+        // db.logout(currentUser.id, (err, data) => {
+        //     logger.emit('log', 'logout', currentUser.id);
+        // });
+        user_m.logout(currentUser.id, (err) => {
             logger.emit('log', 'logout', currentUser.id);
         });
     });

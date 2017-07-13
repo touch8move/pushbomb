@@ -6,7 +6,7 @@ mongoose.connect('mongodb://localhost:27017/pushbomb').connection;
 
 mongoose.connection.on('error', (err) => {
     console.error(`MongoDB connection error: ${err}`);
-    process.exit(-1); // eslint-disable-line no-process-exit
+    // process.exit(-1); // eslint-disable-line no-process-exit
 });
 
 var UserModel = require('./user_m.js');

@@ -1,0 +1,7 @@
+FROM node
+RUN mkdir -p /usr/src/app
+VOLUME ["/usr/src/app"]
+WORKDIR /usr/src/app
+ADD . /usr/src/app
+EXPOSE 7777
+CMD ["npm", "start"]
