@@ -1,9 +1,8 @@
 # docker build
-docker build -t mongovolume ./mongodb/dockerfile
-docker build -t node ./server/dockerfile
+docker build -t node -f ./server/dockerfile .
 
 # docker run
-docker run --name mongovolume -d -v ~/mongodb:/data/db -p 27017:27017 mongovolume
+docker run --name mongodb -d -v ~/mongodb:/data/db -p 27017:27017 mongo
 
 # docker run node
 docker run --name node -d -v .:/usr/src/app -p 7777:7777 node
