@@ -1,8 +1,13 @@
 # docker build
 docker build -t node -f ./server/dockerfile .
 
-# docker run
-docker run --name mongodb -d -v ~/mongodb:/data/db -p 27017:27017 mongo
+# docker network
+docker network create pushbomb-network
+
+
+
+# docker mongodb
+docker run --name mongodb -d --network pushbomb-network -v ~/mongodb:/data/db mongo
 
 # docker run node
-docker run --name node -d -v .:/usr/src/app -p 7777:7777 node
+docker run --name node -d -v $PWD:/usr/src/app --network pushbomb-network node
