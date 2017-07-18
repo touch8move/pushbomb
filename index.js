@@ -5,12 +5,12 @@ if (process.argv[2] != undefined) {
     config = require('./' + process.argv[2] + '.config.json');
     process.env.port = config.port;
     process.env.mode = config.mode;
-    console.log(config);
+    // console.log(config);
 }
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
-console.log('MONGODB_URL:', process.env.MONGODB_URL);
-mongoose.connect(process.env.MONGODB_URL, { server: { auto_reconnect: true } }, (err) => {
+// console.log('MONGODB_URL:', process.env.MONGODB_URL);
+mongoose.connect(config.mongodb_url, { server: { auto_reconnect: true } }, (err) => {
     logger.emit('err', 'mongodb', err);
 });
 
@@ -33,7 +33,7 @@ mongoose.connection.on('reconnected', function() {
 });
 mongoose.connection.on('disconnected', function() {
     console.log('MongoDB disconnected!');
-    mongoose.connect(config.process.env.MONGODB_URL, { server: { auto_reconnect: true } });
+    mongoose.connect(config.mongodb_url, { server: { auto_reconnect: true } });
 });
 
 var FCM = require('fcm-node');
