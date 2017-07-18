@@ -9,6 +9,7 @@ if (process.argv[2] != undefined) {
 }
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
+console.log('MONGODB_URL:', process.env.MONGODB_URL);
 mongoose.connect(process.env.MONGODB_URL, { server: { auto_reconnect: true } }, (err) => {
     logger.emit('err', 'mongodb', err);
 });
