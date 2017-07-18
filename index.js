@@ -75,12 +75,11 @@ io.on('connection', (socket) => {
     var currentUser;
     // 앱 종료
     socket.on('disconnect', () => {
-        // db.logout(currentUser.id, (err, data) => {
-        //     logger.emit('log', 'logout', currentUser.id);
-        // });
-        user_m.logout(currentUser.id, (err) => {
-            logger.emit('log', 'logout', currentUser.id);
-        });
+        if (currentUser) {
+            user_m.logout(currentUser.id, (err) => {
+                logger.emit('log', 'logout', currentUser.id);
+            });
+        }
     });
 
     // 신규유저 

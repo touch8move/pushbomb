@@ -1,13 +1,16 @@
 # docker build
-docker build -t node -f ./server/dockerfile .
+docker build -t nodeserver -f ./server/dockerfile .
 
 # docker network
-docker network create pushbomb-network
+docker network create --attachable --driver overlay backend
 
 
 
 # docker mongodb
-docker run --name mongodb -d --network pushbomb-network -v ~/mongodb:/data/db mongo
+docker run --name mongodb -d --network backend -v ~/mongodb:/data/db mongo
 
 # docker run node
 docker run --name node -d -v $PWD:/usr/src/app --network pushbomb-network node
+
+docker service
+docker service create --name pushbomb -p 7777:7777 --network backend nodeserver
