@@ -14,3 +14,36 @@ docker run --name node -d -v $PWD:/usr/src/app --network pushbomb-network node
 
 docker service
 docker service create --name pushbomb -p 7777:7777 --network backend nodeserver
+
+
+
+# first create a user, updating $user for your environment:
+if [ ! -d "auth" ]; then
+  mkdir -p auth
+fi
+chmod 666 auth/htpasswd
+docker run --rm -it \
+  -v `pwd`/auth:/auth \
+  --entrypoint htpasswd registry:2 -B /auth/htpasswd $user
+chmod 444 auth/htpasswd
+
+# then spin up the registry service listening on port 5000
+docker run -d -p 5000:5000 --restart=always --name registry \
+  -v `pwd`/auth/htpasswd:/auth/htpasswd:ro \
+  -v `pwd`/registry:/var/lib/registry \
+  -e "REGISTRY_AUTH=htpasswd" \
+  -e "REGISTRY_AUTH_HTPASSWD_REALM=Local Registry" \
+  -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
+  -e "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry" \
+  registry:2
+
+# then push your image
+docker login localhost:5000
+docker tag nodeserver localhost:5000/nodeserver
+docker push localhost:5000/nodeserver
+
+# then spin up the service with the new image name
+# replace registryhost with ip/hostname of your registry Docker host
+docker service create --name custom --network my-network \
+  --constraint node.labels.myconstraint==true --with-registry-auth \
+  registryhost:5000/nodeserver

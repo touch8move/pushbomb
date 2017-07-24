@@ -50,13 +50,13 @@ var user_m = require('./user_m.js'),
     sent = require('./sent.js'),
     feedback = require('./feedback.js');
 
-var Msg = (msg, to, options) => {
+var Msg = (msg, to) => {
     return {
         "to": to,
         "notification": {
-            // "title": "NotiTitle",
+            "title": "Push",
             "body": msg,
-            // "sound": "default",
+            "sound": "default",
             // "click_action": "FCM_PLUGIN_ACTIVITY",
             // "icon": "fcm_push_icon",
         }
