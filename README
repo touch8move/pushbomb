@@ -1,5 +1,5 @@
 # docker build
-docker build -t nodeserver -f ./server/dockerfile .
+sudo docker build -t nodeserver -f ./server/dockerfile .
 
 # docker network
 docker network create --attachable --driver overlay backend
