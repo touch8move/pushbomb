@@ -180,6 +180,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('nickname', (data) => {
+        if (data.nickname == undefined) {
+            logger.emit('log', 'empty nickname', data);
+            return;
+        }
         currentUser.nickname = data.nickname;
         currentUser.save(() => {
             socket.emit('nickname_update', { 'nickname': currentUser.nickname });
