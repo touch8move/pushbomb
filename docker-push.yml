@@ -9,7 +9,7 @@ services:
     networks:
       - backend
   pushbomb:
-    image: nodeserver
+    image: nodeserver:latest
     networks:
       - backend
     ports:
