@@ -10,31 +10,38 @@ if (process.argv[2] != undefined) {
 var mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
 // console.log('MONGODB_URL:', process.env.MONGODB_URL);
-mongoose.connect(config.mongodb_url);
+mongoose.connect(config.mongodb_url, (err) => {
+    if (err) {
+        logger.emit('err', 'mongo connect err', err);
+    }
+});
 
 mongoose.connection.on('connecting', () => {
-    console.log('connecting to MongoDB...');
+    // console.log('connecting to MongoDB...');
+    logger.emit('log', 'connecting to MongoDB...');
 });
 
 mongoose.connection.on('error', (error) => {
     // console.error('Error in MongoDb connection: ' + error);
+    // logger.emit('log', 'Error in MongoDb connection:', error);
     mongoose.disconnect();
 });
 mongoose.connection.on('connected', () => {
     console.log('MongoDB connected!');
+    logger.emit('log', 'MongoDB connected!');
 });
 mongoose.connection.once('open', () => {
-    console.log('MongoDB connection opened!');
+    logger.emit('log', 'MongoDB connection opened!');
 });
 mongoose.connection.on('reconnected', () => {
-    console.log('MongoDB reconnected!');
+    logger.emit('log', 'MongoDB reconnected!');
 });
 mongoose.connection.on('disconnected', () => {
-    console.log('MongoDB disconnected!');
+    logger.emit('log', 'MongoDB disconnected!');
     setTimeout(() => {
+        logger.emit('log', 'MongoDB reconnect after 1 sec');
         mongoose.connect(config.mongodb_url);
     }, 1000);
-
 });
 
 var FCM = require('fcm-node');
@@ -182,6 +189,11 @@ io.on('connection', (socket) => {
     socket.on('nickname', (data) => {
         if (data.nickname == undefined) {
             logger.emit('log', 'empty nickname', data);
+            return;
+        }
+        if (currentUser == undefined) {
+            logger.emit('err', 'empty currentUser');
+            socket.emit('goLogin');
             return;
         }
         currentUser.nickname = data.nickname;
