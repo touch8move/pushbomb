@@ -30,12 +30,12 @@ mongoose.connection.on('connected', () => {
     console.log('MongoDB connected!');
     logger.emit('log', 'MongoDB connected!');
 });
-mongoose.connection.once('open', () => {
-    logger.emit('log', 'MongoDB connection opened!');
-});
-mongoose.connection.on('reconnected', () => {
-    logger.emit('log', 'MongoDB reconnected!');
-});
+// mongoose.connection.once('open', () => {
+//     logger.emit('log', 'MongoDB connection opened!');
+// });
+// mongoose.connection.on('reconnected', () => {
+//     logger.emit('log', 'MongoDB reconnected!');
+// });
 mongoose.connection.on('disconnected', () => {
     logger.emit('log', 'MongoDB disconnected!');
     setTimeout(() => {
