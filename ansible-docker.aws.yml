@@ -1,0 +1,58 @@
+---
+- name: AWS Start
+  hosts: test
+  become: true
+  gather_facts: false
+  environment:
+  # python version problem
+    PYTHONPATH: "{{ lookup('env','PYTHONPATH') }}:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages"
+  pre_tasks:
+  - name: install python
+    command: apt-get -y install python
+
+  tasks:
+  # - name: apt setting
+  #   command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  # - name: delete old version docker 
+  #   command: apt-get remove docker docker-engine docker.io
+  # - name: install apt-transport-https ca-certificates curl software-properties-common
+  #   command: apt-get install apt-transport-https ca-certificates curl software-properties-common
+  # - name: add key
+  #   command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  # - name: apt-key fingerprint 0EBFCD88
+  #   command: apt-key fingerprint 0EBFCD88
+  # - name: add repo docker-ce
+  #   command: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  # - name: apt update
+  #   command: apt-get update
+
+  # - name: Install Packages git docker-ce mongodb-org
+  #   apt: 
+  #     name: "{{ item }}"
+  #   with_items:
+  #   - git
+  #   - docker-ce
+  #   - python-pip
+  #   - git
+  
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: /home/ubuntu/pushbomb
+      version: master
+    when: 
+
+  - name: Docker rm service
+    command: docker stack rm $(docker stack ls)
+    
+  - name: Docker build images
+    docker_image:
+      path: ./server/dockerfile
+      name: nodeserver
+
+  # - name: Docker swarm mode
+  #   raw: sudo docker swarm init
+
+  - name: run docker stack
+    command: docker stack deploy --compose-file $PWD/docker-push.yml app_pushbomb
+  

@@ -1,0 +1,51 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  pre_tasks:
+  - name: Install python2 for Ansible with ubuntu 16.04
+    raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python-minimal)"
+    register: output
+    changed_when: output.stdout != ""
+  - name: Gathering Facts
+    setup:
+  tasks:
+  - name: apt setting
+    raw:  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  - name: add mongodb
+    raw: echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" |  tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+  - name: delete old version docker 
+    raw:  apt-get remove docker docker-engine docker.io
+  - name: install apt-transport-https ca-certificates curl software-properties-common
+    raw:  apt-get install apt-transport-https ca-certificates curl software-properties-common
+  - name: add key
+    raw: curl -fsSL https://download.docker.com/linux/ubuntu/gpg |  apt-key add -
+  - name: apt-key fingerprint 0EBFCD88
+    raw:  apt-key fingerprint 0EBFCD88
+  - name: add repo docker-ce
+    raw:  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - name: apt update
+    raw:  apt-get update
+
+  - name: Install Packages git docker-ce mongodb-org
+    apt: 
+      name: "{{ item }}"
+    with_items:
+    - git
+    - docker-ce
+    - mongodb-org
+
+  - name: GIT Clone
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: /home/ubuntu/pushbomb
+  
+  - name: Docker build images
+    raw:  docker build -t nodeserver -f /home/ubuntu/pushbomb/server/dockerfile /home/ubuntu/pushbomb/
+  
+  - name: Docker swarm mode
+    raw:  docker swarm init
+
+  - name: docker stack
+    raw:  docker stack deploy --compose-file /home/ubuntu/pushbomb/docker-push.yml app_pushbomb
+  

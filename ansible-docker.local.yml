@@ -1,0 +1,40 @@
+---
+- name: Localhost Start
+  hosts: localhost
+  environment:
+  # python version problem
+    PYTHONPATH: "{{ lookup('env','PYTHONPATH') }}:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages"
+
+  tasks:
+  - name: tell us which host we are on
+    debug:
+      var: inventory_hostname
+
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: $PWD
+      version: master
+      # accept_hostkey: yes
+      # key_file: $PWD/.ssh/id_rsa
+    # become_user: harry
+    
+
+  # - name: GIT Clone
+  #   git:
+  #     repo: https://github.com/touch8move/pushbomb.git
+  #     dest: /home/ubuntu/pushbomb
+  - name: Docker rm service
+    command: docker stack rm $(docker stack ls)
+    
+  - name: Docker build images
+    docker_image:
+      path: ./server/dockerfile
+      name: nodeserver
+
+  # - name: Docker swarm mode
+  #   raw: sudo docker swarm init
+
+  - name: run docker stack
+    command: docker stack deploy --compose-file $PWD/docker-push.yml app_pushbomb
+  

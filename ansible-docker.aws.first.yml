@@ -1,0 +1,81 @@
+---
+- name: AWS Start
+  hosts: all
+  vars:
+    # UBUNTU_COMMON_ROOT_PASSWORD: 'abcdefg'
+    SERVER_HOME: /home/ubuntu/pushbomb
+  become: true
+  gather_facts: false
+  environment:
+  # python version problem
+    PYTHONPATH: "{{ lookup('env','PYTHONPATH') }}:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages"
+  pre_tasks:
+  - name: output
+    debug:
+      var: tag
+  # - name: Change root password
+  #   user: name=root password="{{ UBUNTU_COMMON_ROOT_PASSWORD }}"
+  - name: install python
+    raw:  apt-get -y install python
+  tasks:
+  - name: apt setting
+    shell:  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  - name: delete old version docker 
+    shell:  apt-get remove docker docker-engine docker.io
+  - name: install apt-transport-https ca-certificates curl software-properties-common
+    shell:  apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  - name: add key
+    shell:  curl -fsSL https://download.docker.com/linux/ubuntu/gpg |  apt-key add -
+  - name: apt-key fingerprint 0EBFCD88
+    shell:  apt-key fingerprint 0EBFCD88
+  - name: add repo docker-ce
+    shell:  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - name: apt update
+    shell:  apt-get update
+
+  - name: Install Packages git docker-ce python-pip
+    apt: 
+      name: "{{ item }}"
+    with_items:
+    - git
+    - docker-ce
+    - python-pip
+  
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: "{{ SERVER_HOME }}"
+      version: master
+    
+  - name: determine swarm status
+    shell:  docker info | egrep '^Swarm' | cut -d ' ' -f2
+    register: swarm_status
+  
+  - name: initialize swarm cluster
+    shell: >
+       docker swarm init
+      # --advertise-addr={{ swarm_iface | default('eth0') }}:2377
+    when: "'active' not in swarm_status.stdout_lines"
+  
+  - name: Docker search
+    shell:  docker stack ls
+    register: has_stack
+
+  - name: find app
+    shell:  docker stack rm app_pushbomb
+    when: "'app_pushbomb' not in has_stack.stdout_lines"
+
+  - name: docker pull registry:latest
+    shell: docker pull registry:latest
+
+  - name: Docker build images
+    shell:  docker build --rm -t nodeserver -f "{{ SERVER_HOME }}/server/dockerfile" "{{ SERVER_HOME }}"
+  
+  - name: run docker stack
+    shell:  docker stack deploy --compose-file "{{ SERVER_HOME }}/docker-push.yml" app_pushbomb
+  
+  - name: Docker tag images
+    shell: docker tag nodeserver localhost:5000/nodeserver
+
+  - name: Docker push images
+    shell: docker push localhost:5000/nodeserver
