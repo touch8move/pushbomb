@@ -1,0 +1,1 @@
+ansible-playbook -i hosts.yml ansible-docker.aws.worker.yml --limit workers --extra-vars "jointoken=docker swarm join --token SWMTKN-1-30qalwms1ey4m3bg235p4r8an386o9zrwzpauz34tbxa46aamb-8kae4zm1wfntyqqor7bx1ddwz 172.17.8.101:2377"

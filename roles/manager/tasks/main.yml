@@ -1,0 +1,80 @@
+---
+  - name: Install Packages git
+    apt: 
+      name: "{{ item }}"
+    with_items:
+    - git
+  - name: Install Docker-py
+    pip:
+      name: docker-py
+
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: "{{ SERVER_HOME }}"
+      version: master
+    
+  - name: determine swarm status
+    shell:  docker info | egrep '^Swarm' | cut -d ' ' -f2
+    register: swarm_status
+  
+  - name: initialize swarm cluster
+    shell: >
+       docker swarm init --advertise-addr=172.17.8.101:2377
+    when: "'active' not in swarm_status.stdout_lines"
+    
+  - name: get token
+    shell: docker swarm join-token worker
+    register: token
+
+  - name: show token
+    debug:
+      var: token
+
+  - name: Docker search
+    shell:  docker stack ls
+    register: has_stack
+
+  - name: find app
+    shell:  docker stack rm app
+    when: "'app_pushbomb' not in has_stack.stdout_lines"
+
+  - name: Install Registry
+    docker_container:
+      name: registry
+      image: registry
+      ports:
+      - 5000:5000
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    run_once: true
+  
+  - name: Install Mongodb
+    docker_container:
+      name: mongodb
+      image: mongo
+      ports:
+      - 27017:27017
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    run_once: true
+  
+  - name: Install portainer
+    docker_container:
+      name: portainer
+      image: portainer/portainer
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - 9000:9000
+      # command: --templates http://templates/templates.json -d /data -H tcp://<DOCKER_HOST>:<DOCKER_PORT>
+    
+  - name: Build nodeserver Image
+    docker_image:
+      path: /home/ubuntu/pushbomb/server
+      name: 172.17.8.101:5000/nodeserver
+      tag: v2
+      push: yes
+
+  - name: Service Start
+    shell: docker stack deploy --compose-file /home/ubuntu/pushbomb/docker-push.yml app

@@ -1,0 +1,22 @@
+---
+  - name: apt setting
+    shell:  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+  - name: delete old version docker 
+    shell:  apt-get remove docker docker-engine docker.io
+  - name: install apt-transport-https ca-certificates curl software-properties-common
+    shell:  apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  - name: add key
+    shell:  curl -fsSL https://download.docker.com/linux/ubuntu/gpg |  apt-key add -
+  - name: apt-key fingerprint 0EBFCD88
+    shell:  apt-key fingerprint 0EBFCD88
+  - name: add repo docker-ce
+    shell:  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - name: apt update
+    shell:  apt-get update
+
+  - name: Install Packages docker-ce python-pip
+    apt: 
+      name: "{{ item }}"
+    with_items:
+    - docker-ce
+    - python-pip

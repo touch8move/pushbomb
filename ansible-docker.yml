@@ -1,0 +1,28 @@
+---
+- name: AWS Start
+  hosts: all
+  vars:
+    SERVER_HOME: /home/ubuntu/pushbomb
+  become: true
+  gather_facts: false
+  # environment:
+  # python version problem
+    # PYTHONPATH: "{{ lookup('env','PYTHONPATH') }}:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages"
+  pre_tasks:
+  - name: install python
+    raw:  apt-get -y install python
+  
+  roles:
+    - common
+
+    
+- name: core-01
+  hosts: core-01
+  vars:
+    SERVER_HOME: /home/ubuntu/pushbomb
+  become: true
+  gather_facts: false
+  
+  roles:
+    - manager
+  

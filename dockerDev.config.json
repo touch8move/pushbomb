@@ -2,6 +2,6 @@
     "name": "development Docker",
     "port": 7777,
     "mode": "dev",
-    "mongodb_url": "mongodb://mongodb:27017/pushbomb",
+    "mongodb_url": "mongodb://172.17.8.101:27017/pushbomb",
     "fcm_key": "AAAAwvWv-7U:APA91bFBa9BtddemjfFDYyByXzrTKff_hGTEH4X8UUzqf8iKllUt2DyArfDy5GcWp5znZ9ssZgO72LxOc47C_XD0agM5flLKT_4J2i2EttNvnw-yLHFWJpj8_hvE63Di0MWv2zsd26RE"
 }
