@@ -11,7 +11,7 @@
   - name: Clone bitbucket repo
     git:
       repo: https://github.com/touch8move/pushbomb.git
-      dest: "{{ SERVER_HOME }}"
+      dest: /home/ubuntu/pushbomb
       version: master
     
   - name: determine swarm status
@@ -41,7 +41,7 @@
 
   - name: Install Registry
     docker_container:
-      name: registry
+      name: myregistry
       image: registry
       ports:
       - 5000:5000
@@ -72,8 +72,8 @@
   - name: Build nodeserver Image
     docker_image:
       path: /home/ubuntu/pushbomb/server
-      name: 172.17.8.101:5000/nodeserver
-      tag: v2
+      name: localhost:5000/nodeserver
+      # tag: v2
       push: yes
 
   - name: Service Start

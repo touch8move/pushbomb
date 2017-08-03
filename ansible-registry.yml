@@ -1,0 +1,15 @@
+---
+
+  - name: core-01
+    hosts: core-01
+    vars:
+      SERVER_HOME: /home/ubuntu/pushbomb
+    become: true
+    gather_facts: false
+    tasks:
+    - name: Build nodeserver Image
+      docker_image:
+        path: /home/ubuntu/pushbomb/server
+        name: 127.0.0.1:5000/nodeserver
+        # tag: v2
+        push: yes

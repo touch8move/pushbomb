@@ -18,11 +18,19 @@
     
 - name: core-01
   hosts: core-01
-  vars:
-    SERVER_HOME: /home/ubuntu/pushbomb
+  # vars:
+  #   SERVER_HOME: /home/ubuntu/pushbomb
   become: true
   gather_facts: false
   
   roles:
     - manager
   
+- name: worker
+  hosts: worker
+
+  become: true
+  gather_facts: false
+  
+  roles:
+    - worker

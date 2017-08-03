@@ -20,3 +20,6 @@
     with_items:
     - docker-ce
     - python-pip
+
+  - name: cp daemon
+    shell: cp /home/ubuntu/pushbomb/daemon.json /etc/docker/daemon.json

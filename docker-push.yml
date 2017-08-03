@@ -10,7 +10,7 @@ services:
   #   networks:
   #     - backend
   pushbomb:
-    image: 172.17.8.101:5000/nodeserver
+    image: core-01:5000/nodeserver
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
