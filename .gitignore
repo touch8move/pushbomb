@@ -1,6 +1,8 @@
 # General
 .vagrant/
 
+# ansible
+*.retry
 # Log files (if you are creating logs in debug mode, uncomment this)
 # *.logs
 # mongodb data

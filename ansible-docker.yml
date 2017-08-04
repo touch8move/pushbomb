@@ -1,5 +1,4 @@
 ---
-# swarm_token: def
   - name: AWS Start
     hosts: all
     vars:
@@ -34,20 +33,16 @@
 
   - name: master
     hosts: master
-    # vars:
-    #   SERVER_HOME: /home/ubuntu/pushbomb
     become: true
     gather_facts: false
     
     roles:
       - registry
       - manager
-    
+  
   - name: worker
     hosts: worker
-
     become: true
     gather_facts: false
-    
     roles:
       - worker
