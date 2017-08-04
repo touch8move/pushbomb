@@ -27,6 +27,6 @@
   - name: Build nodeserver Image
     docker_image:
       path: /home/ubuntu/pushbomb
-      dockerfile: server/dockerfile
+      dockerfile: ./server/dockerfile
       name: localhost:5000/nodeserver
       push: yes
