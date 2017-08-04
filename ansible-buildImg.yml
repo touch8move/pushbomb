@@ -7,12 +7,19 @@
     gather_facts: false
     
     tasks:
+    - name: Clone bitbucket repo
+      git:
+        repo: https://github.com/touch8move/pushbomb.git
+        dest: /home/ubuntu/pushbomb
+        version: ansible
+
     - name: Build nodeserver Image
       docker_image:
-        path: ./pushbomb/server
+        path: /home/ubuntu/pushbomb
+        dockerfile: dockerfile
         name: localhost:5000/nodeserver
         push: yes
-
+    
     - name: Docker search
       shell:  docker stack ls
       register: has_stack
