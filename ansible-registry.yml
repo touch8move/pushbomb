@@ -1,15 +1,18 @@
 ---
 
-  - name: core-01
-    hosts: core-01
+  - name: docker registry
+    hosts: registry
     vars:
       SERVER_HOME: /home/ubuntu/pushbomb
     become: true
     gather_facts: false
-    tasks:
-    - name: Build nodeserver Image
-      docker_image:
-        path: /home/ubuntu/pushbomb/server
-        name: 127.0.0.1:5000/nodeserver
-        # tag: v2
-        push: yes
+    # environment:
+    # python version problem
+      # PYTHONPATH: "{{ lookup('env','PYTHONPATH') }}:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages"
+    pre_tasks:
+    - name: install python
+      raw:  apt-get -y install python
+    
+    roles:
+      # - common
+      - registry

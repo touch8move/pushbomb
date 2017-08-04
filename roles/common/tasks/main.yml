@@ -1,4 +1,5 @@
 ---
+  # 도커 설치를 위한 패키지 repo등록
   - name: apt setting
     shell:  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
   - name: delete old version docker 
@@ -13,7 +14,8 @@
     shell:  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - name: apt update
     shell:  apt-get update
-
+  # 기본적으로 https로 접근하게 되는데 내부에선 필요없기때문에 예외주소를 각 서버에 도커가 실행되기 전에 미리 놔둘 필요가 있다
+  
   - name: Install Packages docker-ce python-pip
     apt: 
       name: "{{ item }}"
@@ -21,5 +23,10 @@
     - docker-ce
     - python-pip
 
-  - name: cp daemon
-    shell: cp /home/ubuntu/pushbomb/daemon.json /etc/docker/daemon.json
+  - name: cp daemon for insecure-registry
+    copy:
+      src: daemon.json
+      dest: /etc/docker/daemon.json
+  
+  - name: docker restart
+    shell: service docker restart

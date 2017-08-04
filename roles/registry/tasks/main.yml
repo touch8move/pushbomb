@@ -1,0 +1,31 @@
+---
+  - name: Install Packages git
+    apt: 
+      name: "{{ item }}"
+    with_items:
+    - git
+  - name: Install Docker-py
+    pip:
+      name: docker-py
+
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: /home/ubuntu/pushbomb
+      version: master
+      
+  - name: Install Registry
+    docker_container:
+      name: myregistry
+      image: registry
+      ports:
+      - 5000:5000
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    run_once: true
+
+  - name: Build nodeserver Image
+    docker_image:
+      path: /home/ubuntu/pushbomb/server
+      name: localhost:5000/nodeserver
+      push: yes

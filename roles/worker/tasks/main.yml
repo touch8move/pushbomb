@@ -1,0 +1,5 @@
+
+---
+  - name: Pull images
+    shell: docker pull 172.17.8.101:5000/nodeserver
+    # register: output
