@@ -25,11 +25,11 @@
     
   - name: get token
     shell: docker swarm join-token worker
-    register: swarm_token
+    register: token
 
   - name: show token
     debug:
-      var: swarm_token
+      var: token
 
   - name: Install Mongodb
     docker_container:

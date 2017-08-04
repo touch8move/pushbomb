@@ -1,5 +1,5 @@
 ---
-swarm_token: def
+# swarm_token: def
   - name: AWS Start
     hosts: all
     vars:
