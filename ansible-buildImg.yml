@@ -1,0 +1,23 @@
+---
+  - name: master
+    hosts: master
+    # vars:
+    #   SERVER_HOME: /home/ubuntu/pushbomb
+    become: true
+    gather_facts: false
+    
+    tasks:
+    - name: Build nodeserver Image
+      docker_image:
+        path: ./pushbomb/server
+        name: localhost:5000/nodeserver
+        push: yes
+
+    - name: Docker search
+      shell:  docker stack ls
+      register: has_stack
+    - name: find app
+      shell:  docker stack rm app
+      when: "'app_pushbomb' not in has_stack.stdout_lines"
+    - name: Service Start
+      shell: docker stack deploy --compose-file ./pushbomb/docker-push.yml app
