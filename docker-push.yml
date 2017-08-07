@@ -32,7 +32,7 @@ services:
     mode: global
     volumes: 
       - /var/run/docker.sock:/var/run/docker.sock
-    mount: type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
+      - type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
     ports: 
       - 80:80
     environment:
