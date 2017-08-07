@@ -11,12 +11,14 @@ services:
   #     - backend
   myredis:
     image: redis
-    volumes: /var/run/docker.sock:/var/run/docker.sock
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
   pushbomb:
     image: 172.17.8.101:5000/nodeserver
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    networks: virtualhost
+    networks: 
+      - virtualhost
     ports:
       - 7777:7777
     deploy:
@@ -25,15 +27,16 @@ services:
     
   virtualhost:
     image: cendra/virtualhost
-    networks: virtualhost
+    networks: 
+      - virtualhost
     mode: global
-    volumes: /var/run/docker.sock:/var/run/docker.sock
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
     mount: type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
-    ports: 80:80
+    ports: 
+      - 80:80
     environment:
       - REDIS=myredis
 networks:
   virtualhost:
     driver: overlay
-volumes:
-  mongo-data:
