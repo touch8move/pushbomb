@@ -2,18 +2,25 @@
   # 도커 설치를 위한 패키지 repo등록
   - name: apt setting
     shell:  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+    run_once: true
   - name: delete old version docker 
     shell:  apt-get remove docker docker-engine docker.io
+    run_once: true
   - name: install apt-transport-https ca-certificates curl software-properties-common
     shell:  apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    run_once: true
   - name: add key
     shell:  curl -fsSL https://download.docker.com/linux/ubuntu/gpg |  apt-key add -
+    run_once: true
   - name: apt-key fingerprint 0EBFCD88
     shell:  apt-key fingerprint 0EBFCD88
+    run_once: true
   - name: add repo docker-ce
     shell:  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    run_once: true
   - name: apt update
     shell:  apt-get update
+    run_once: true
   # 기본적으로 https로 접근하게 되는데 내부에선 필요없기때문에 예외주소를 각 서버에 도커가 실행되기 전에 미리 놔둘 필요가 있다
   
   - name: Install Packages docker-ce python-pip
@@ -22,11 +29,14 @@
     with_items:
     - docker-ce
     - python-pip
+    run_once: true
 
   - name: cp daemon for insecure-registry
     copy:
       src: daemon.json
       dest: /etc/docker/daemon.json
+    run_once: true
   
   - name: docker restart
     shell: service docker restart
+    run_once: true

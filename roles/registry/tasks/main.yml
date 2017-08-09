@@ -4,15 +4,14 @@
       name: "{{ item }}"
     with_items:
     - git
+    run_once: true
   - name: Install Docker-py
     pip:
-      name: docker-py
-
-  - name: Clone bitbucket repo
-    git:
-      repo: https://github.com/touch8move/pushbomb.git
-      dest: /home/ubuntu/pushbomb
-      version: ansible
+      name: "{{ item }}"
+    with_items:
+    - docker
+    - docker-compose
+    run_once: true
       
   - name: Install Registry
     docker_container:
@@ -24,9 +23,14 @@
         - /var/run/docker.sock:/var/run/docker.sock
     run_once: true
 
+  - name: Clone bitbucket repo
+    git:
+      repo: https://github.com/touch8move/pushbomb.git
+      dest: /home/ubuntu/pushbomb
+      version: ansible
   - name: Build nodeserver Image
     docker_image:
       path: /home/ubuntu/pushbomb
       dockerfile: ./server/dockerfile
-      name: localhost:5000/nodeserver
+      name: localhost:5000/nodeserver_{{ imgName }}
       push: yes

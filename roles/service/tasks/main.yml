@@ -1,0 +1,54 @@
+---
+  - name: Docker search
+    shell:  docker stack ls
+    register: has_stack
+  - name: find app
+    shell:  docker stack rm app
+    when: "'app' not in has_stack.stdout_lines"
+  - name: Service Start
+    shell: docker stack deploy --compose-file /home/ubuntu/pushbomb/docker-push.yml app
+
+  # - name: Docker Service
+  #   # docker_service:
+  #   #   project_name: pushbomb
+  #   #   project_src: /home/ubuntu/pushbomb/docker-push.yml
+
+  #   docker_service:
+  #     project_name: pushbomb
+  #     definition:
+  #       version: '2'
+  #       services:
+  #         # myredis:
+  #         #   image: redis
+  #         #   volumes: 
+  #         #     - /var/run/docker.sock:/var/run/docker.sock
+  #         pushbomb:
+  #           image: 172.17.8.101:5000/nodeserver_{{ imgName }}
+  #           volumes: 
+  #             - /var/run/docker.sock:/var/run/docker.sock
+  #           # networks: 
+  #           #   - virtualhost
+  #           ports:
+  #             - 7777:7777
+  #           # depends_on:
+  #           #   - virtualhost
+  #           # deploy:
+  #           #   mode: replicated
+  #           #   replicas: 6
+  #         # virtualhost:
+  #         #   image: cendra/virtualhost
+  #         #   # networks: virtualhost
+  #         #   # mode: 
+  #         #   #   - global
+  #         #   volumes: 
+  #         #     - /var/run/docker.sock:/var/run/docker.sock
+  #         #     - type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
+  #         #   ports: 
+  #         #     - 80:80
+  #         #   depends_on: 
+  #         #     - myredis
+  #         #   environment:
+  #         #     - REDIS=myredis
+  #         #     - MODE=global
+  #     # register: output
+  #     # debug: msg=output

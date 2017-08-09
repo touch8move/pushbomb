@@ -16,29 +16,61 @@
       ports:
         - 9000:9000
       # command: --templates http://templates/templates.json -d /data -H tcp://<DOCKER_HOST>:<DOCKER_PORT>
-    run_once: true
+    run_once: true    
 
   - name: determine swarm status
     shell:  docker info | egrep '^Swarm' | cut -d ' ' -f2
     register: swarm_status
+    run_once: true
   
   - name: initialize swarm cluster
     shell: >
        docker swarm init --advertise-addr=172.17.8.101:2377
     when: "'active' not in swarm_status.stdout_lines"
+    run_once: true
     
   - name: get token
     shell: docker swarm join-token worker | grep 'docker' | sed -e 's/^[ \t]*//'
     register: master_token
+    run_once: true
 
-  - name: show token
-    debug: var=master_token
+  # - name: Swarm Services
+  #   docker_service:
+  #     project_name: traefik_network
+  #     definition:
+  #       version: "2"
+  #       services:
+  #         traefik:
+  #           image: traefik
+  #           command: --web --docker --docker.domain=docker.172.17.8.101 --logLevel=DEBUG
+  #           ports:
+  #             - 80:80
+  #             - 8080:8080
+  #           volumes:
+  #             - /var/run/docker.sock:/var/run/docker.sock
+  #             - /dev/null:/traefik.toml
+  #           networks:
+  #             - traefik_network
+  #         pushbomb:
+  #           image: 172.17.8.101:5000/nodeserver_{{ imgName }}
+  #           volumes:
+  #             - /var/run/docker.sock:/var/run/docker.sock
+  #           networks: 
+  #             - traefik_network
+  #           ports:
+  #             - 7777:7777
+  #       networks:
+  #         traefik_network:
+  #           driver: bridge
+  #   register: output
+  # - debug:
+  #     var: output
 
-  - name: Docker search
-    shell:  docker stack ls
-    register: has_stack
-  - name: find app
-    shell:  docker stack rm app
-    when: "'app' not in has_stack.stdout_lines"
-  - name: Service Start
-    shell: docker stack deploy --compose-file /home/ubuntu/pushbomb/docker-push.yml app
+  # - name: Docker search
+  #   shell:  docker stack ls
+  #   register: has_stack
+  # - name: find app
+  #   shell:  docker stack rm app
+  #   when: "'app' not in has_stack.stdout_lines"
+  # - name: Service Start
+  #   shell: docker stack deploy --compose-file /home/ubuntu/pushbomb/docker-push.yml app

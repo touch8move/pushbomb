@@ -42,6 +42,8 @@ Vagrant.configure("2") do |config|
     master.vm.network "private_network", ip: ip
     master.vm.network "forwarded_port", guest: 2375, host: 2375, auto_correct: true
     master.vm.network "forwarded_port", guest: 7777, host: 7777, auto_correct: true
+    master.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+    master.vm.network "forwarded_port", guest: 80, host: 80, auto_correct: true
     master.vm.network "forwarded_port", guest: 27017, host: 27017, auto_correct: true
   end
 

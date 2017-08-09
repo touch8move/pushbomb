@@ -1,42 +1,40 @@
 version: "3"
 services:
-  # mongodb:
-  #   image: mongo:latest
-  #   volumes:
-  #     - mongo-data:/data/db
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   ports:
-  #     - 27017:27017
-  #   networks:
-  #     - backend
-  myredis:
-    image: redis
-    volumes: 
+  mongodb:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 27017:27017
+    networks:
+      - traefik_network
   pushbomb:
     image: 172.17.8.101:5000/nodeserver
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks: 
-      - virtualhost
+      - traefik_network
     ports:
       - 7777:7777
     deploy:
       mode: replicated
       replicas: 6
     
-  virtualhost:
-    image: cendra/virtualhost
-    networks: 
-      - virtualhost
-    mode: global
-    volumes: 
-      - /var/run/docker.sock:/var/run/docker.sock
-      - type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
-    ports: 
+  traefik:
+    image: traefik
+    command: --web --docker --docker.domain=docker.172.17.8.101 --logLevel=DEBUG
+    ports:
       - 80:80
-    environment:
-      - REDIS=myredis
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/null:/traefik.toml
+    networks:
+      - traefik_network
 networks:
-  virtualhost:
+  traefik_network:
     driver: overlay
+
+volumes:
+  mongo-data:
